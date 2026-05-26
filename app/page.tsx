@@ -26,7 +26,8 @@ export default function Home() {
   const [votes, setVotes] = useState<Vote[]>([]); 
   const [user, setUser] = useState<any>(null);
   
-  const [filterMode, setFilterMode] = useState<'all' | 'group' | 'nation' | 'needs_host'>('all');
+  // 1. ADDED 'my_votes' TO THE FILTER MODES
+  const [filterMode, setFilterMode] = useState<'all' | 'group' | 'nation' | 'needs_host' | 'my_votes'>('all');
   const [filterValue, setFilterValue] = useState<string>('');
 
   useEffect(() => {
@@ -61,12 +62,17 @@ export default function Home() {
         const hasHost = matchVotes.some(v => v.intent === 'host');
         return hasWatchers && !hasHost;
       });
+    } else if (filterMode === 'my_votes' && user) {
+      // 2. NEW LOGIC: Only show matches where the current user has a vote
+      result = matches.filter(match => {
+        return votes.some(v => v.match_id === match.id && v.user_email === user.email);
+      });
     }
 
     return result.sort((a, b) => new Date(a.utc_start_time).getTime() - new Date(b.utc_start_time).getTime());
-  }, [matches, votes, filterMode, filterValue]);
+  }, [matches, votes, filterMode, filterValue, user]); // Added user to dependencies
 
-  const handleModeChange = (mode: 'all' | 'group' | 'nation' | 'needs_host') => {
+  const handleModeChange = (mode: 'all' | 'group' | 'nation' | 'needs_host' | 'my_votes') => {
     setFilterMode(mode);
     setFilterValue('');
   };
@@ -107,6 +113,13 @@ export default function Home() {
             <button onClick={() => handleModeChange('needs_host')} className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-bold transition flex items-center gap-2 ${filterMode === 'needs_host' ? 'bg-orange-100 shadow-sm text-orange-700' : 'text-gray-600 hover:text-orange-600'}`}>
               ⚠️ Needs Host
             </button>
+            
+            {/* 3. NEW BUTTON: Only shows if the user is logged in */}
+            {user && (
+              <button onClick={() => handleModeChange('my_votes')} className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-bold transition flex items-center gap-2 ${filterMode === 'my_votes' ? 'bg-green-100 shadow-sm text-green-700' : 'text-gray-600 hover:text-green-600'}`}>
+                ✅ My Votes
+              </button>
+            )}
           </div>
 
           {filterMode === 'group' && (
@@ -126,7 +139,9 @@ export default function Home() {
 
         {filteredMatches.length === 0 ? (
           <div className="text-center p-12 bg-white rounded-xl border border-gray-100">
-            <p className="text-gray-500 font-medium">No matches found for this filter.</p>
+            <p className="text-gray-500 font-medium">
+              {filterMode === 'my_votes' ? "You haven't voted on any matches yet!" : "No matches found for this filter."}
+            </p>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
