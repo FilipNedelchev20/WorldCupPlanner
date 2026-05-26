@@ -9,11 +9,12 @@ type Vote = {
   match_id: number;
   intent: string;
   user_email: string;
-  username?: string | null; // Allows old votes to exist without crashing
+  username?: string | null; 
   avatar_url?: string | null; 
 };
 
-export default function VoteButtons({ matchId, initialVotes = [] }: { matchId: number; initialVotes: Vote[]; }) {
+// NOTICE: We added 'onVoteChange' so it can talk to the parent page!
+export default function VoteButtons({ matchId, initialVotes = [], onVoteChange }: { matchId: number; initialVotes: Vote[]; onVoteChange?: () => void; }) {
   const [votes, setVotes] = useState<Vote[]>(initialVotes);
 
   useEffect(() => {
@@ -28,15 +29,33 @@ export default function VoteButtons({ matchId, initialVotes = [] }: { matchId: n
     const username = user.user_metadata?.username || user.user_metadata?.full_name || 'Fan';
     const avatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || '';
 
-    const existingVote = votes.find(v => v.user_email === userEmail && v.intent === intent);
+    // NEW: Find ANY vote by this user for this specific match (ignores intent)
+    const existingVote = votes.find(v => v.user_email === userEmail);
 
     if (existingVote) {
-      const { error } = await supabase.from('votes').delete().match({ match_id: matchId, user_email: userEmail, intent: intent });
-      if (!error) setVotes(prev => prev.filter(v => !(v.user_email === userEmail && v.intent === intent)));
+      if (existingVote.intent === intent) {
+        // TOGGLE OFF: They clicked the same button, so we delete their vote
+        const { error } = await supabase.from('votes').delete().match({ match_id: matchId, user_email: userEmail });
+        if (!error) {
+          setVotes(prev => prev.filter(v => v.user_email !== userEmail));
+          if (onVoteChange) onVoteChange();
+        }
+      } else {
+        // SWAP VOTE: They clicked the OTHER button, so we update their existing vote
+        const { error } = await supabase.from('votes').update({ intent: intent }).match({ match_id: matchId, user_email: userEmail });
+        if (!error) {
+          setVotes(prev => prev.map(v => v.user_email === userEmail ? { ...v, intent: intent } : v));
+          if (onVoteChange) onVoteChange();
+        }
+      }
     } else {
+      // NEW VOTE: They have never voted on this match before
       const newVote = { user_email: userEmail, match_id: matchId, intent: intent, username: username, avatar_url: avatar };
       const { error } = await supabase.from('votes').insert(newVote);
-      if (!error) setVotes(prev => [...prev, newVote]);
+      if (!error) {
+        setVotes(prev => [...prev, newVote]);
+        if (onVoteChange) onVoteChange();
+      }
     }
   };
 
@@ -46,7 +65,6 @@ export default function VoteButtons({ matchId, initialVotes = [] }: { matchId: n
   const renderAvatars = (voteList: Vote[]) => (
     <div className="flex flex-wrap gap-1 mt-1">
       {voteList.map(v => {
-        // Fallback name so it doesn't crash on old blank data
         const displayName = v.username || 'Fan'; 
         return v.avatar_url ? 
           <img key={v.user_email} src={v.avatar_url} title={displayName} alt={displayName} className="w-6 h-6 rounded-full border border-gray-200 object-cover" /> :

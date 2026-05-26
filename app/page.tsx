@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { formatInTimeZone } from 'date-fns-tz';
 import Link from 'next/link';
@@ -26,32 +26,44 @@ export default function Home() {
   const [votes, setVotes] = useState<Vote[]>([]); 
   const [user, setUser] = useState<any>(null);
   
-  // Added 'any_votes' to the filter list
   const [filterMode, setFilterMode] = useState<'all' | 'group' | 'nation' | 'needs_host' | 'my_votes' | 'any_votes'>('all');
   const [filterValue, setFilterValue] = useState<string>('');
+
+  // NEW: A reusable function to fetch the latest votes
+  const fetchVotes = useCallback(async () => {
+    const { data: voteData } = await supabase.from('votes').select('*');
+    if (voteData) setVotes(voteData as Vote[]);
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
       const { data: matchData } = await supabase.from('matches').select('*').order('utc_start_time', { ascending: true });
       if (matchData) setMatches(matchData as Match[]);
 
-      const { data: voteData } = await supabase.from('votes').select('*');
-      if (voteData) setVotes(voteData as Vote[]);
+      await fetchVotes(); // Grab votes on first load
 
       const { data: userData } = await supabase.auth.getUser();
       setUser(userData.user);
     };
     loadData();
 
-    // NEW LOGIC: Real-time listener for Facebook/Google OAuth redirects
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user || null);
     });
 
+    // NEW: Listen for when the user switches browser tabs and comes back!
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchVotes(); 
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       authListener.subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [fetchVotes]);
 
   const uniqueGroups = useMemo(() => Array.from(new Set(matches.map(m => m.group_name))).filter(Boolean).sort(), [matches]);
   const uniqueNations = useMemo(() => Array.from(new Set(matches.flatMap(m => [m.home_team, m.away_team]))).filter(Boolean).sort(), [matches]);
@@ -76,7 +88,6 @@ export default function Home() {
         return votes.some(v => v.match_id === match.id && v.user_email === user.email);
       });
     } else if (filterMode === 'any_votes') {
-      // NEW LOGIC: Show matches that have at least one vote of any kind
       result = matches.filter(match => {
         return votes.some(v => v.match_id === match.id);
       });
@@ -124,7 +135,6 @@ export default function Home() {
             <button onClick={() => handleModeChange('group')} className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-semibold transition ${filterMode === 'group' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}>By Group</button>
             <button onClick={() => handleModeChange('nation')} className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-semibold transition ${filterMode === 'nation' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}>By Nation</button>
             
-            {/* NEW: Voted Matches Button */}
             <button onClick={() => handleModeChange('any_votes')} className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-bold transition flex items-center gap-2 ${filterMode === 'any_votes' ? 'bg-purple-100 shadow-sm text-purple-700' : 'text-gray-600 hover:text-purple-600'}`}>
               🔥 Voted Matches
             </button>
@@ -181,7 +191,8 @@ export default function Home() {
                       <p>🏟️ <strong>Local Time:</strong> {localTime}</p>
                     </div>
                   </div>
-                  <VoteButtons matchId={match.id} initialVotes={matchVotes} />
+                  {/* NEW: Passing fetchVotes directly into the component so it forces a refresh on click! */}
+                  <VoteButtons matchId={match.id} initialVotes={matchVotes} onVoteChange={fetchVotes} />
                 </div>
               );
             })}
