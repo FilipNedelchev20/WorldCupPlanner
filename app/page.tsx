@@ -26,8 +26,8 @@ export default function Home() {
   const [votes, setVotes] = useState<Vote[]>([]); 
   const [user, setUser] = useState<any>(null);
   
-  // 1. ADDED 'my_votes' TO THE FILTER MODES
-  const [filterMode, setFilterMode] = useState<'all' | 'group' | 'nation' | 'needs_host' | 'my_votes'>('all');
+  // Added 'any_votes' to the filter list
+  const [filterMode, setFilterMode] = useState<'all' | 'group' | 'nation' | 'needs_host' | 'my_votes' | 'any_votes'>('all');
   const [filterValue, setFilterValue] = useState<string>('');
 
   useEffect(() => {
@@ -42,6 +42,15 @@ export default function Home() {
       setUser(userData.user);
     };
     loadData();
+
+    // NEW LOGIC: Real-time listener for Facebook/Google OAuth redirects
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const uniqueGroups = useMemo(() => Array.from(new Set(matches.map(m => m.group_name))).filter(Boolean).sort(), [matches]);
@@ -63,16 +72,20 @@ export default function Home() {
         return hasWatchers && !hasHost;
       });
     } else if (filterMode === 'my_votes' && user) {
-      // 2. NEW LOGIC: Only show matches where the current user has a vote
       result = matches.filter(match => {
         return votes.some(v => v.match_id === match.id && v.user_email === user.email);
+      });
+    } else if (filterMode === 'any_votes') {
+      // NEW LOGIC: Show matches that have at least one vote of any kind
+      result = matches.filter(match => {
+        return votes.some(v => v.match_id === match.id);
       });
     }
 
     return result.sort((a, b) => new Date(a.utc_start_time).getTime() - new Date(b.utc_start_time).getTime());
-  }, [matches, votes, filterMode, filterValue, user]); // Added user to dependencies
+  }, [matches, votes, filterMode, filterValue, user]);
 
-  const handleModeChange = (mode: 'all' | 'group' | 'nation' | 'needs_host' | 'my_votes') => {
+  const handleModeChange = (mode: 'all' | 'group' | 'nation' | 'needs_host' | 'my_votes' | 'any_votes') => {
     setFilterMode(mode);
     setFilterValue('');
   };
@@ -110,11 +123,16 @@ export default function Home() {
             <button onClick={() => handleModeChange('all')} className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-semibold transition ${filterMode === 'all' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}>All Matches</button>
             <button onClick={() => handleModeChange('group')} className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-semibold transition ${filterMode === 'group' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}>By Group</button>
             <button onClick={() => handleModeChange('nation')} className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-semibold transition ${filterMode === 'nation' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}>By Nation</button>
+            
+            {/* NEW: Voted Matches Button */}
+            <button onClick={() => handleModeChange('any_votes')} className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-bold transition flex items-center gap-2 ${filterMode === 'any_votes' ? 'bg-purple-100 shadow-sm text-purple-700' : 'text-gray-600 hover:text-purple-600'}`}>
+              🔥 Voted Matches
+            </button>
+
             <button onClick={() => handleModeChange('needs_host')} className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-bold transition flex items-center gap-2 ${filterMode === 'needs_host' ? 'bg-orange-100 shadow-sm text-orange-700' : 'text-gray-600 hover:text-orange-600'}`}>
               ⚠️ Needs Host
             </button>
             
-            {/* 3. NEW BUTTON: Only shows if the user is logged in */}
             {user && (
               <button onClick={() => handleModeChange('my_votes')} className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-bold transition flex items-center gap-2 ${filterMode === 'my_votes' ? 'bg-green-100 shadow-sm text-green-700' : 'text-gray-600 hover:text-green-600'}`}>
                 ✅ My Votes
