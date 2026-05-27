@@ -243,7 +243,7 @@ export default function Home() {
                     
                     <div className="bg-gray-50 rounded-2xl p-4 text-xs font-medium text-gray-600 space-y-2 border border-gray-100 mb-4">
                       <p className="flex items-center gap-2"><span className="text-base">📍</span> {match.venue_stadium}, {match.venue_city}</p>
-                      <p className="flex items-center gap-2"><span className="text-base">🇧🇬</span> <strong className="text-gray-900">BG Time:</strong> {bgTime}</p>
+                      <p className="flex items-center gap-2"><span className="text-base">⏰</span> <strong className="text-gray-900">BG Time:</strong> {bgTime}</p>
                       <p className="flex items-center gap-2"><span className="text-base">🏟️</span> <strong className="text-gray-900">Local Time:</strong> {localTime}</p>
                     </div>
 
