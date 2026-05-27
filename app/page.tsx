@@ -12,16 +12,51 @@ type Match = { id: number; group_name: string; home_team: string; away_team: str
 type Vote = { match_id: number; intent: string; user_email: string; username?: string | null; avatar_url?: string | null; };
 
 // Dictionary to convert Country Names to Flag Codes
+// Supercharged Dictionary to convert Country Names to Flag Codes
 const getCountryCode = (country: string) => {
+  if (!country) return null;
+  
   const map: Record<string, string> = {
-    'Argentina': 'ar', 'France': 'fr', 'Brazil': 'br', 'England': 'gb-eng', 'USA': 'us', 'United States': 'us',
-    'Mexico': 'mx', 'Canada': 'ca', 'Spain': 'es', 'Germany': 'de', 'Italy': 'it', 'Portugal': 'pt',
-    'Netherlands': 'nl', 'Belgium': 'be', 'Croatia': 'hr', 'Uruguay': 'uy', 'Colombia': 'co',
-    'Senegal': 'sn', 'Japan': 'jp', 'South Korea': 'kr', 'Morocco': 'ma', 'Switzerland': 'ch',
-    'Australia': 'au', 'Denmark': 'dk', 'Ecuador': 'ec', 'Saudi Arabia': 'sa', 'Poland': 'pl',
-    'Sweden': 'se', 'Wales': 'gb-wls', 'Cameroon': 'cm', 'Ghana': 'gh', 'Serbia': 'rs', 'Peru': 'pe',
+    // North America (CONCACAF)
+    'usa': 'us', 'united states': 'us', 'mexico': 'mx', 'canada': 'ca', 
+    'costa rica': 'cr', 'panama': 'pa', 'jamaica': 'jm', 'honduras': 'hn', 
+    'el salvador': 'sv', 'haiti': 'ht', 'trinidad and tobago': 'tt',
+
+    // South America (CONMEBOL)
+    'argentina': 'ar', 'brazil': 'br', 'uruguay': 'uy', 'colombia': 'co', 
+    'ecuador': 'ec', 'peru': 'pe', 'chile': 'cl', 'paraguay': 'py', 
+    'venezuela': 've', 'bolivia': 'bo',
+
+    // Europe (UEFA)
+    'france': 'fr', 'england': 'gb-eng', 'spain': 'es', 'germany': 'de', 
+    'italy': 'it', 'portugal': 'pt', 'netherlands': 'nl', 'belgium': 'be', 
+    'croatia': 'hr', 'switzerland': 'ch', 'denmark': 'dk', 'poland': 'pl', 
+    'sweden': 'se', 'wales': 'gb-wls', 'serbia': 'rs', 'scotland': 'gb-sct', 
+    'ukraine': 'ua', 'austria': 'at', 'turkey': 'tr', 'hungary': 'hu', 
+    'czech republic': 'cz', 'republic of ireland': 'ie', 'norway': 'no', 
+    'finland': 'fi', 'iceland': 'is', 'greece': 'gr', 'romania': 'ro', 
+    'bulgaria': 'bg', 'slovakia': 'sk', 'slovenia': 'si', 'albania': 'al',
+    'northern ireland': 'gb-nir',
+
+    // Africa (CAF)
+    'senegal': 'sn', 'morocco': 'ma', 'cameroon': 'cm', 'ghana': 'gh', 
+    'tunisia': 'tn', 'nigeria': 'ng', 'algeria': 'dz', 'egypt': 'eg', 
+    'mali': 'ml', 'ivory coast': 'ci', 'cote d\'ivoire': 'ci', 'south africa': 'za',
+    'burkina faso': 'bf', 'dr congo': 'cd', 'guinea': 'gn',
+
+    // Asia (AFC)
+    'japan': 'jp', 'south korea': 'kr', 'saudi arabia': 'sa', 'iran': 'ir', 
+    'australia': 'au', 'qatar': 'qa', 'uae': 'ae', 'united arab emirates': 'ae', 
+    'iraq': 'iq', 'china': 'cn', 'china pr': 'cn', 'oman': 'om', 'syria': 'sy', 
+    'uzbekistan': 'uz', 'vietnam': 'vn', 'jordan': 'jo', 'bahrain': 'bh',
+
+    // Oceania (OFC)
+    'new zealand': 'nz', 'fiji': 'fj', 'solomon islands': 'sb', 'tahiti': 'pf'
   };
-  return map[country] || null;
+
+  // Convert the input to lowercase and trim spaces to ensure a perfect match!
+  const cleanCountryName = country.toLowerCase().trim();
+  return map[cleanCountryName] || null;
 };
 
 const getVenueTimeZone = (city: string) => {
@@ -235,7 +270,7 @@ export default function Home() {
                     
                     <div className="bg-gray-50 rounded-2xl p-4 text-xs font-medium text-gray-600 space-y-2 border border-gray-100">
                       <p className="flex items-center gap-2"><span className="text-base">📍</span> {match.venue_stadium}, {match.venue_city}</p>
-                      <p className="flex items-center gap-2"><span className="text-base">🇧🇬</span> <strong className="text-gray-900">BG Time:</strong> {bgTime}</p>
+                      <p className="flex items-center gap-2"><span className="text-base">⏰</span> <strong className="text-gray-900">BG Time:</strong> {bgTime}</p>
                       <p className="flex items-center gap-2"><span className="text-base">🏟️</span> <strong className="text-gray-900">Local Time:</strong> {localTime}</p>
                     </div>
                   </div>
