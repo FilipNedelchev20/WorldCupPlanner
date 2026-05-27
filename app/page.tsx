@@ -32,8 +32,8 @@ const getVenueTimeZone = (city: string) => {
   return zones[city] || 'UTC';
 };
 
-// FIXED: Now accepts the safe 'currentTime' state to prevent Hydration crashes
-const getMatchStatus = (utcDate: string, now: Date) => {
+const getMatchStatus = (utcDate: string) => {
+  const now = new Date();
   const matchStart = new Date(utcDate);
   const diffMs = matchStart.getTime() - now.getTime();
   const diffMins = Math.floor(diffMs / 60000);
@@ -47,12 +47,10 @@ const getMatchStatus = (utcDate: string, now: Date) => {
   return { text: `Starts in ${diffDays} days`, style: 'bg-gray-100 text-gray-700 border border-gray-200' };
 };
 
+// FIXED: Defined the exact types allowed for the filter mode
 type FilterMode = 'all' | 'group' | 'nation' | 'needs_host' | 'my_votes' | 'any_votes';
 
 export default function Home() {
-  // FIXED: Hydration safety check
-  const [mounted, setMounted] = useState(false);
-  
   const [matches, setMatches] = useState<Match[]>([]);
   const [votes, setVotes] = useState<Vote[]>([]); 
   const [comments, setComments] = useState<Comment[]>([]);
@@ -64,9 +62,7 @@ export default function Home() {
   const [showInstructions, setShowInstructions] = useState(false);
   const [chatMatch, setChatMatch] = useState<Match | null>(null);
   const [newComment, setNewComment] = useState("");
-  
-  // FIXED: Standard array destructuring to pass the Linter
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [, setCurrentTime] = useState(new Date());
 
   const fetchData = useCallback(async () => {
     const { data: voteData } = await supabase.from('votes').select('*');
@@ -75,7 +71,7 @@ export default function Home() {
     if (commentData) setComments(commentData as Comment[]);
   }, []);
 
- useEffect(() => {
+  useEffect(() => {
     const loadInitial = async () => {
       const { data: matchData } = await supabase.from('matches').select('*').order('utc_start_time', { ascending: true });
       if (matchData) setMatches(matchData as Match[]);
@@ -101,11 +97,12 @@ export default function Home() {
       clearInterval(timeInterval);
     };
   }, [fetchData]);
+
   const topHosts = useMemo(() => {
     const hosts = votes.filter(v => v.intent === 'host');
-    const counts: Record<string, { email: string, username: string, avatar: string, count: number }> = {};
+    const counts: Record<string, { username: string, avatar: string, count: number }> = {};
     hosts.forEach(v => {
-      if (!counts[v.user_email]) counts[v.user_email] = { email: v.user_email, username: v.username || 'Fan', avatar: v.avatar_url || '', count: 0 };
+      if (!counts[v.user_email]) counts[v.user_email] = { username: v.username || 'Fan', avatar: v.avatar_url || '', count: 0 };
       counts[v.user_email].count += 1;
     });
     return Object.values(counts).sort((a, b) => b.count - a.count).slice(0, 5);
@@ -125,6 +122,7 @@ export default function Home() {
     return result.sort((a, b) => new Date(a.utc_start_time).getTime() - new Date(b.utc_start_time).getTime());
   }, [matches, votes, filterMode, filterValue, user]);
 
+  // FIXED: Mode typing is now exact instead of 'any'
   const handleModeChange = (mode: FilterMode) => { setFilterMode(mode); setFilterValue(''); };
 
   const generateCalendarLink = (match: Match) => {
@@ -146,11 +144,6 @@ export default function Home() {
 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
   const displayName = user?.user_metadata?.username || user?.user_metadata?.full_name || 'My Profile';
-
-  // FIXED: Wait until the browser fully loads before showing the page to prevent Hydration errors
-  if (!mounted) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><p className="text-gray-500 font-bold animate-pulse">Loading World Cup Data...</p></div>;
-  }
 
   return (
     <main className="min-h-screen bg-gray-50 pb-16">
@@ -185,7 +178,7 @@ export default function Home() {
             <div className="flex-shrink-0 text-center sm:text-left"><h2 className="text-xl font-black text-gray-900">🏆 MVP Hosts</h2><p className="text-xs text-gray-500 font-bold uppercase mt-1">Carrying the friend group</p></div>
             <div className="flex flex-wrap justify-center sm:justify-start gap-4 flex-1">
               {topHosts.map((host, idx) => (
-                <div key={host.email} className="flex flex-col items-center group cursor-pointer relative">
+                <div key={host.username} className="flex flex-col items-center group cursor-pointer relative">
                   <div className="absolute -top-3 -right-2 bg-yellow-400 text-gray-900 text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full z-10 border-2 border-white shadow-sm">{idx + 1}</div>
                   {host.avatar ? <img src={host.avatar} alt={host.username} className="w-12 h-12 rounded-full border-2 border-gray-100 object-cover group-hover:border-yellow-400 transition-colors" /> : <div className="w-12 h-12 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center border-2 border-gray-100 uppercase group-hover:border-yellow-400 transition-colors">{host.username[0]}</div>}
                   <span className="text-xs font-bold text-gray-700 mt-1 max-w-[60px] truncate">{host.username}</span>
@@ -224,8 +217,7 @@ export default function Home() {
               const homeFlag = getCountryCode(match.home_team);
               const awayFlag = getCountryCode(match.away_team);
               
-              // FIXED: Uses safe 'currentTime'
-              const status = getMatchStatus(match.utc_start_time, currentTime);
+              const status = getMatchStatus(match.utc_start_time);
 
               return (
                 <div key={match.id} className="bg-white rounded-3xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
