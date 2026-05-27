@@ -11,7 +11,6 @@ import { Toaster } from 'react-hot-toast';
 type Match = { id: number; group_name: string; home_team: string; away_team: string; venue_city: string; venue_stadium: string; utc_start_time: string; };
 type Vote = { match_id: number; intent: string; user_email: string; username?: string | null; avatar_url?: string | null; };
 
-// Dictionary to convert Country Names to Flag Codes
 // Supercharged Dictionary to convert Country Names to Flag Codes
 const getCountryCode = (country: string) => {
   if (!country) return null;
@@ -21,6 +20,7 @@ const getCountryCode = (country: string) => {
     'usa': 'us', 'united states': 'us', 'mexico': 'mx', 'canada': 'ca', 
     'costa rica': 'cr', 'panama': 'pa', 'jamaica': 'jm', 'honduras': 'hn', 
     'el salvador': 'sv', 'haiti': 'ht', 'trinidad and tobago': 'tt',
+    'curaçao': 'cw', 'curacao': 'cw', // <-- Added Curaçao
 
     // South America (CONMEBOL)
     'argentina': 'ar', 'brazil': 'br', 'uruguay': 'uy', 'colombia': 'co', 
@@ -32,20 +32,25 @@ const getCountryCode = (country: string) => {
     'italy': 'it', 'portugal': 'pt', 'netherlands': 'nl', 'belgium': 'be', 
     'croatia': 'hr', 'switzerland': 'ch', 'denmark': 'dk', 'poland': 'pl', 
     'sweden': 'se', 'wales': 'gb-wls', 'serbia': 'rs', 'scotland': 'gb-sct', 
-    'ukraine': 'ua', 'austria': 'at', 'turkey': 'tr', 'hungary': 'hu', 
-    'czech republic': 'cz', 'republic of ireland': 'ie', 'norway': 'no', 
-    'finland': 'fi', 'iceland': 'is', 'greece': 'gr', 'romania': 'ro', 
-    'bulgaria': 'bg', 'slovakia': 'sk', 'slovenia': 'si', 'albania': 'al',
-    'northern ireland': 'gb-nir',
+    'ukraine': 'ua', 'austria': 'at', 'turkey': 'tr', 'türkiye': 'tr', // <-- Added Türkiye
+    'hungary': 'hu', 'czech republic': 'cz', 'czechia': 'cz', // <-- Added Czechia
+    'republic of ireland': 'ie', 'norway': 'no', 'finland': 'fi', 'iceland': 'is', 
+    'greece': 'gr', 'romania': 'ro', 'bulgaria': 'bg', 'slovakia': 'sk', 
+    'slovenia': 'si', 'albania': 'al', 'northern ireland': 'gb-nir',
+    'bosnia and herzegovina': 'ba', // <-- Added Bosnia and Herzegovina
 
     // Africa (CAF)
     'senegal': 'sn', 'morocco': 'ma', 'cameroon': 'cm', 'ghana': 'gh', 
     'tunisia': 'tn', 'nigeria': 'ng', 'algeria': 'dz', 'egypt': 'eg', 
-    'mali': 'ml', 'ivory coast': 'ci', 'cote d\'ivoire': 'ci', 'south africa': 'za',
-    'burkina faso': 'bf', 'dr congo': 'cd', 'guinea': 'gn',
+    'mali': 'ml', 'ivory coast': 'ci', 'cote d\'ivoire': 'ci', 
+    'côte d\'ivoire': 'ci', // <-- Added exact accent for Côte d'Ivoire
+    'south africa': 'za', 'burkina faso': 'bf', 
+    'dr congo': 'cd', 'congo dr': 'cd', // <-- Added Congo DR
+    'guinea': 'gn', 'cabo verde': 'cv', 'cape verde': 'cv', // <-- Added Cabo Verde
 
     // Asia (AFC)
-    'japan': 'jp', 'south korea': 'kr', 'saudi arabia': 'sa', 'iran': 'ir', 
+    'japan': 'jp', 'south korea': 'kr', 'korea republic': 'kr', // <-- Added Korea Republic
+    'saudi arabia': 'sa', 'iran': 'ir', 'ir iran': 'ir', // <-- Added IR Iran
     'australia': 'au', 'qatar': 'qa', 'uae': 'ae', 'united arab emirates': 'ae', 
     'iraq': 'iq', 'china': 'cn', 'china pr': 'cn', 'oman': 'om', 'syria': 'sy', 
     'uzbekistan': 'uz', 'vietnam': 'vn', 'jordan': 'jo', 'bahrain': 'bh',
@@ -54,11 +59,9 @@ const getCountryCode = (country: string) => {
     'new zealand': 'nz', 'fiji': 'fj', 'solomon islands': 'sb', 'tahiti': 'pf'
   };
 
-  // Convert the input to lowercase and trim spaces to ensure a perfect match!
   const cleanCountryName = country.toLowerCase().trim();
   return map[cleanCountryName] || null;
 };
-
 const getVenueTimeZone = (city: string) => {
   const zones: Record<string, string> = {
     'Mexico City': 'America/Mexico_City', 'Guadalajara': 'America/Mexico_City', 'Monterrey': 'America/Monterrey',
