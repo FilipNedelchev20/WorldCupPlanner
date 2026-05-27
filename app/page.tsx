@@ -11,57 +11,22 @@ import { Toaster } from 'react-hot-toast';
 type Match = { id: number; group_name: string; home_team: string; away_team: string; venue_city: string; venue_stadium: string; utc_start_time: string; };
 type Vote = { match_id: number; intent: string; user_email: string; username?: string | null; avatar_url?: string | null; };
 
-// Supercharged Dictionary to convert Country Names to Flag Codes
 const getCountryCode = (country: string) => {
   if (!country) return null;
   
   const map: Record<string, string> = {
-    // North America (CONCACAF)
-    'usa': 'us', 'united states': 'us', 'mexico': 'mx', 'canada': 'ca', 
-    'costa rica': 'cr', 'panama': 'pa', 'jamaica': 'jm', 'honduras': 'hn', 
-    'el salvador': 'sv', 'haiti': 'ht', 'trinidad and tobago': 'tt',
-    'curaçao': 'cw', 'curacao': 'cw', // <-- Added Curaçao
-
-    // South America (CONMEBOL)
-    'argentina': 'ar', 'brazil': 'br', 'uruguay': 'uy', 'colombia': 'co', 
-    'ecuador': 'ec', 'peru': 'pe', 'chile': 'cl', 'paraguay': 'py', 
-    'venezuela': 've', 'bolivia': 'bo',
-
-    // Europe (UEFA)
-    'france': 'fr', 'england': 'gb-eng', 'spain': 'es', 'germany': 'de', 
-    'italy': 'it', 'portugal': 'pt', 'netherlands': 'nl', 'belgium': 'be', 
-    'croatia': 'hr', 'switzerland': 'ch', 'denmark': 'dk', 'poland': 'pl', 
-    'sweden': 'se', 'wales': 'gb-wls', 'serbia': 'rs', 'scotland': 'gb-sct', 
-    'ukraine': 'ua', 'austria': 'at', 'turkey': 'tr', 'türkiye': 'tr', // <-- Added Türkiye
-    'hungary': 'hu', 'czech republic': 'cz', 'czechia': 'cz', // <-- Added Czechia
-    'republic of ireland': 'ie', 'norway': 'no', 'finland': 'fi', 'iceland': 'is', 
-    'greece': 'gr', 'romania': 'ro', 'bulgaria': 'bg', 'slovakia': 'sk', 
-    'slovenia': 'si', 'albania': 'al', 'northern ireland': 'gb-nir',
-    'bosnia and herzegovina': 'ba', // <-- Added Bosnia and Herzegovina
-
-    // Africa (CAF)
-    'senegal': 'sn', 'morocco': 'ma', 'cameroon': 'cm', 'ghana': 'gh', 
-    'tunisia': 'tn', 'nigeria': 'ng', 'algeria': 'dz', 'egypt': 'eg', 
-    'mali': 'ml', 'ivory coast': 'ci', 'cote d\'ivoire': 'ci', 
-    'côte d\'ivoire': 'ci', // <-- Added exact accent for Côte d'Ivoire
-    'south africa': 'za', 'burkina faso': 'bf', 
-    'dr congo': 'cd', 'congo dr': 'cd', // <-- Added Congo DR
-    'guinea': 'gn', 'cabo verde': 'cv', 'cape verde': 'cv', // <-- Added Cabo Verde
-
-    // Asia (AFC)
-    'japan': 'jp', 'south korea': 'kr', 'korea republic': 'kr', // <-- Added Korea Republic
-    'saudi arabia': 'sa', 'iran': 'ir', 'ir iran': 'ir', // <-- Added IR Iran
-    'australia': 'au', 'qatar': 'qa', 'uae': 'ae', 'united arab emirates': 'ae', 
-    'iraq': 'iq', 'china': 'cn', 'china pr': 'cn', 'oman': 'om', 'syria': 'sy', 
-    'uzbekistan': 'uz', 'vietnam': 'vn', 'jordan': 'jo', 'bahrain': 'bh',
-
-    // Oceania (OFC)
+    'usa': 'us', 'united states': 'us', 'mexico': 'mx', 'canada': 'ca', 'costa rica': 'cr', 'panama': 'pa', 'jamaica': 'jm', 'honduras': 'hn', 'el salvador': 'sv', 'haiti': 'ht', 'trinidad and tobago': 'tt', 'curaçao': 'cw', 'curacao': 'cw',
+    'argentina': 'ar', 'brazil': 'br', 'uruguay': 'uy', 'colombia': 'co', 'ecuador': 'ec', 'peru': 'pe', 'chile': 'cl', 'paraguay': 'py', 'venezuela': 've', 'bolivia': 'bo',
+    'france': 'fr', 'england': 'gb-eng', 'spain': 'es', 'germany': 'de', 'italy': 'it', 'portugal': 'pt', 'netherlands': 'nl', 'belgium': 'be', 'croatia': 'hr', 'switzerland': 'ch', 'denmark': 'dk', 'poland': 'pl', 'sweden': 'se', 'wales': 'gb-wls', 'serbia': 'rs', 'scotland': 'gb-sct', 'ukraine': 'ua', 'austria': 'at', 'turkey': 'tr', 'türkiye': 'tr', 'hungary': 'hu', 'czech republic': 'cz', 'czechia': 'cz', 'republic of ireland': 'ie', 'norway': 'no', 'finland': 'fi', 'iceland': 'is', 'greece': 'gr', 'romania': 'ro', 'bulgaria': 'bg', 'slovakia': 'sk', 'slovenia': 'si', 'albania': 'al', 'northern ireland': 'gb-nir', 'bosnia and herzegovina': 'ba',
+    'senegal': 'sn', 'morocco': 'ma', 'cameroon': 'cm', 'ghana': 'gh', 'tunisia': 'tn', 'nigeria': 'ng', 'algeria': 'dz', 'egypt': 'eg', 'mali': 'ml', 'ivory coast': 'ci', 'cote d\'ivoire': 'ci', 'côte d\'ivoire': 'ci', 'south africa': 'za', 'burkina faso': 'bf', 'dr congo': 'cd', 'congo dr': 'cd', 'guinea': 'gn', 'cabo verde': 'cv', 'cape verde': 'cv',
+    'japan': 'jp', 'south korea': 'kr', 'korea republic': 'kr', 'saudi arabia': 'sa', 'iran': 'ir', 'ir iran': 'ir', 'australia': 'au', 'qatar': 'qa', 'uae': 'ae', 'united arab emirates': 'ae', 'iraq': 'iq', 'china': 'cn', 'china pr': 'cn', 'oman': 'om', 'syria': 'sy', 'uzbekistan': 'uz', 'vietnam': 'vn', 'jordan': 'jo', 'bahrain': 'bh',
     'new zealand': 'nz', 'fiji': 'fj', 'solomon islands': 'sb', 'tahiti': 'pf'
   };
 
   const cleanCountryName = country.toLowerCase().trim();
   return map[cleanCountryName] || null;
 };
+
 const getVenueTimeZone = (city: string) => {
   const zones: Record<string, string> = {
     'Mexico City': 'America/Mexico_City', 'Guadalajara': 'America/Mexico_City', 'Monterrey': 'America/Monterrey',
@@ -79,6 +44,9 @@ export default function Home() {
   
   const [filterMode, setFilterMode] = useState<'all' | 'group' | 'nation' | 'needs_host' | 'my_votes' | 'any_votes'>('all');
   const [filterValue, setFilterValue] = useState<string>('');
+
+  // NEW STATE: Tracks if the instruction modal is open
+  const [showInstructions, setShowInstructions] = useState(false);
 
   const fetchVotes = useCallback(async () => {
     const { data: voteData } = await supabase.from('votes').select('*');
@@ -149,7 +117,7 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50 pb-16">
       <Toaster position="bottom-center" />
       
-      {/* 1. NEW STADIUM HERO BANNER */}
+      {/* STADIUM HERO BANNER */}
       <div className="relative bg-gray-900 text-white shadow-2xl mb-10">
         <img 
           src="https://images.unsplash.com/photo-1518605368461-1ee7e1617ff5?q=80&w=2000&auto=format&fit=crop" 
@@ -158,7 +126,7 @@ export default function Home() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent"></div>
         
-        <div className="relative max-w-6xl mx-auto px-6 py-12 sm:py-20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+        <div className="relative max-w-6xl mx-auto px-6 py-12 sm:py-20 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
             <h1 className="text-4xl sm:text-6xl font-extrabold mb-3 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-yellow-100 to-white">
               World Cup 2026
@@ -166,20 +134,30 @@ export default function Home() {
             <p className="text-gray-300 text-lg max-w-md font-medium">Plan your watch parties, find hosts, and never miss a match.</p>
           </div>
           
-          {user ? (
-            <Link href="/profile" className="flex items-center gap-3 hover:scale-105 transition-transform bg-white/10 backdrop-blur-md p-2 pr-5 rounded-full border border-white/20 shadow-lg">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Profile" className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400" />
-              ) : (
-                <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center text-gray-900 font-bold text-xl uppercase">{displayName[0]}</div>
-              )}
-              <span className="font-semibold text-white drop-shadow-sm">{displayName}</span>
-            </Link>
-          ) : (
-            <Link href="/login" className="bg-yellow-500 text-gray-900 px-8 py-3 rounded-full font-bold hover:bg-yellow-400 hover:scale-105 transition-all shadow-[0_0_20px_rgba(234,179,8,0.4)]">
-              Login / Sign Up
-            </Link>
-          )}
+          {/* HEADER BUTTONS: Instructions + Profile/Login */}
+          <div className="flex items-center gap-4 flex-wrap">
+            <button 
+              onClick={() => setShowInstructions(true)} 
+              className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-5 py-3 rounded-full border border-white/20 text-white font-bold hover:bg-white/20 hover:scale-105 transition-all shadow-lg"
+            >
+              <span>📖</span> How to Use
+            </button>
+
+            {user ? (
+              <Link href="/profile" className="flex items-center gap-3 hover:scale-105 transition-transform bg-white/10 backdrop-blur-md p-2 pr-5 rounded-full border border-white/20 shadow-lg">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Profile" className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400" />
+                ) : (
+                  <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center text-gray-900 font-bold text-xl uppercase">{displayName[0]}</div>
+                )}
+                <span className="font-semibold text-white drop-shadow-sm">{displayName}</span>
+              </Link>
+            ) : (
+              <Link href="/login" className="bg-yellow-500 text-gray-900 px-8 py-3 rounded-full font-bold hover:bg-yellow-400 hover:scale-105 transition-all shadow-[0_0_20px_rgba(234,179,8,0.4)]">
+                Login / Sign Up
+              </Link>
+            )}
+          </div>
         </div>
       </div>
       
@@ -240,7 +218,6 @@ export default function Home() {
               const awayFlag = getCountryCode(match.away_team);
 
               return (
-                // 3. NEW ANIMATED MATCH CARDS
                 <div key={match.id} className="bg-white rounded-3xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
                   <div>
                     <div className="flex justify-between items-center mb-6">
@@ -248,7 +225,6 @@ export default function Home() {
                       <span className="text-xs font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full">Match {match.id}</span>
                     </div>
                     
-                    {/* NEW FLAG LAYOUT */}
                     <div className="flex items-center justify-between mb-8 px-2">
                       <div className="flex flex-col items-center flex-1">
                         {homeFlag ? (
@@ -273,7 +249,7 @@ export default function Home() {
                     
                     <div className="bg-gray-50 rounded-2xl p-4 text-xs font-medium text-gray-600 space-y-2 border border-gray-100">
                       <p className="flex items-center gap-2"><span className="text-base">📍</span> {match.venue_stadium}, {match.venue_city}</p>
-                      <p className="flex items-center gap-2"><span className="text-base">⏰</span> <strong className="text-gray-900">BG Time:</strong> {bgTime}</p>
+                      <p className="flex items-center gap-2"><span className="text-base">🇧🇬</span> <strong className="text-gray-900">BG Time:</strong> {bgTime}</p>
                       <p className="flex items-center gap-2"><span className="text-base">🏟️</span> <strong className="text-gray-900">Local Time:</strong> {localTime}</p>
                     </div>
                   </div>
@@ -285,6 +261,51 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* NEW: INSTRUCTIONS MODAL OVERLAY */}
+      {showInstructions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl relative">
+            <button 
+              onClick={() => setShowInstructions(false)} 
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 text-3xl font-light leading-none p-2"
+            >
+              &times;
+            </button>
+            
+            <h2 className="text-2xl font-black mb-6 text-gray-900">How to coordinate! 🏆</h2>
+            
+            <div className="space-y-5 text-sm text-gray-600 font-medium">
+              <div className="flex gap-4">
+                <span className="text-2xl">👀</span>
+                <p><strong className="text-gray-900 block mb-1">1. Vote to Watch</strong> Click this if you want to watch the match with friends, but you don't have a place to host it.</p>
+              </div>
+              
+              <div className="flex gap-4">
+                <span className="text-2xl">🏠</span>
+                <p><strong className="text-gray-900 block mb-1">2. Host Game</strong> Click this if you have a TV, snacks, and you are officially offering up your place for people to come watch.</p>
+              </div>
+              
+              <div className="flex gap-4">
+                <span className="text-2xl">⚠️</span>
+                <p><strong className="text-gray-900 block mb-1">3. Find the Gaps</strong> Use the <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-bold">Needs Host</span> tab to instantly find matches where people want to watch, but nobody has stepped up to host yet.</p>
+              </div>
+
+              <div className="flex gap-4">
+                <span className="text-2xl">⚙️</span>
+                <p><strong className="text-gray-900 block mb-1">4. Make it yours</strong> Click on your profile picture in the top right to change your Display Name or add a custom avatar link so your friends know it's you.</p>
+              </div>
+            </div>
+            
+            <button 
+              onClick={() => setShowInstructions(false)} 
+              className="mt-8 w-full bg-yellow-500 text-gray-900 font-bold py-3 rounded-xl hover:bg-yellow-400 transition-colors shadow-sm"
+            >
+              Let's Go!
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
