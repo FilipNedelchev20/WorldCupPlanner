@@ -1,0 +1,16 @@
+{
+  "name": "World Cup Planner",
+  "short_name": "WC 2026",
+  "description": "Coordinate watch parties with friends.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#eab308",
+  "icons": [
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Soccerball.svg/512px-Soccerball.svg.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
