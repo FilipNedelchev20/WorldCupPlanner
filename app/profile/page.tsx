@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -12,6 +12,7 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editAvatar, setEditAvatar] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -27,6 +28,34 @@ export default function ProfilePage() {
     };
     getUser();
   }, [router]);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (!event.target.files || event.target.files.length === 0) return;
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}-${Math.random()}.${fileExt}`;
+
+      setIsUploading(true);
+
+      // Upload to the 'avatars' bucket in Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get the public URL of the uploaded image
+      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      
+      setEditAvatar(data.publicUrl);
+      toast.success("Image uploaded! Click Save to apply.");
+    } catch (error: any) {
+      toast.error(error.message || "Error uploading image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSave = async () => {
     const { data, error } = await supabase.auth.updateUser({
@@ -63,18 +92,53 @@ export default function ProfilePage() {
         {isEditing ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold text-center mb-4">Edit Profile</h2>
+            
+            {/* Avatar Preview */}
+            <div className="flex justify-center mb-4">
+              {editAvatar ? (
+                <img src={editAvatar} alt="Preview" className="w-20 h-20 rounded-full object-cover border-4 border-blue-50" />
+              ) : (
+                <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-sm font-bold">No Image</div>
+              )}
+            </div>
+
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase">Display Name</label>
-              <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="w-full p-2 border border-gray-300 rounded mt-1" />
+              <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="w-full p-2 border border-gray-300 rounded mt-1 outline-none focus:border-blue-500" />
             </div>
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">Profile Picture URL</label>
-              <input type="text" placeholder="Paste an image link..." value={editAvatar} onChange={e => setEditAvatar(e.target.value)} className="w-full p-2 border border-gray-300 rounded mt-1" />
-              <p className="text-xs text-gray-400 mt-1">Hint: Right click an image online and select "Copy Image Address".</p>
+
+            <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
+              <label className="text-xs font-bold text-gray-500 uppercase">Update Avatar</label>
+              
+              {/* Option 1: File Upload */}
+              <div>
+                <span className="text-xs text-gray-600 font-semibold block mb-1">Option 1: Upload File</span>
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                />
+                {isUploading && <p className="text-xs text-blue-600 mt-1 animate-pulse">Uploading...</p>}
+              </div>
+
+              <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-gray-200"></div>
+                <span className="flex-shrink-0 mx-4 text-gray-400 text-xs font-bold">OR</span>
+                <div className="flex-grow border-t border-gray-200"></div>
+              </div>
+
+              {/* Option 2: Paste URL */}
+              <div>
+                <span className="text-xs text-gray-600 font-semibold block mb-1">Option 2: Paste Image URL</span>
+                <input type="text" placeholder="https://..." value={editAvatar} onChange={e => setEditAvatar(e.target.value)} className="w-full p-2 text-sm border border-gray-300 rounded outline-none focus:border-blue-500" />
+              </div>
             </div>
+
             <div className="flex gap-2 mt-6">
-              <button onClick={() => setIsEditing(false)} className="flex-1 py-2 bg-gray-100 rounded font-semibold text-gray-600">Cancel</button>
-              <button onClick={handleSave} className="flex-1 py-2 bg-blue-600 rounded font-semibold text-white">Save</button>
+              <button onClick={() => setIsEditing(false)} className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 transition rounded-lg font-semibold text-gray-700">Cancel</button>
+              <button onClick={handleSave} disabled={isUploading} className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 transition rounded-lg font-semibold text-white disabled:opacity-50">Save</button>
             </div>
           </div>
         ) : (

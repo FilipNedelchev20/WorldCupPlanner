@@ -131,20 +131,48 @@ export default function VoteButtons({
         </button>
       </div>
 
-      <div className="text-xs text-gray-600 space-y-3 min-h-[40px]">
+      <div className="text-xs text-gray-600 space-y-3 min-h-[40px] mt-4">
         {hosts.length > 0 && (
-          <div className="bg-green-50 p-2 rounded-lg border border-green-100 mb-2">
-            <span className="font-bold text-green-800 flex items-center gap-1 mb-1">🏠 Hosts:</span>
-            {hosts.map((h, i) => (
-              <div key={`${h.user_email}-${i}`} className="ml-5 list-disc mb-1">
-                <span className="font-bold">{h.username}</span> 
-                {h.rsvp_limit && <span className="text-[10px] bg-green-200 text-green-800 px-1.5 py-0.5 rounded ml-1">Limit: {h.rsvp_limit}</span>}
-                {h.host_message && <p className="italic text-gray-500 text-[10px]">"{h.host_message}"</p>}
-              </div>
-            ))}
+          <div className="bg-green-50 p-3 rounded-xl border border-green-100 mb-2">
+            <span className="font-bold text-green-800 flex items-center gap-1 mb-2">🏠 Hosts:</span>
+            <div className="space-y-2">
+              {hosts.map((h, i) => (
+                <div key={`${h.user_email}-${i}`} className="flex items-center gap-2 bg-white/60 p-2 rounded-lg">
+                  {h.avatar_url ? (
+                    <img src={h.avatar_url} alt={h.username || 'Host'} className="w-8 h-8 rounded-full object-cover border border-green-200" />
+                  ) : (
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-bold uppercase">{h.username?.[0] || 'H'}</div>
+                  )}
+                  <div className="flex flex-col">
+                    <span className="font-bold text-gray-900">
+                      {h.username}
+                      {h.rsvp_limit && <span className="text-[10px] font-bold bg-green-200 text-green-800 px-1.5 py-0.5 rounded-full ml-2">Limit: {h.rsvp_limit}</span>}
+                    </span>
+                    {h.host_message && <span className="italic text-gray-500 text-[11px]">"{h.host_message}"</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
-        {watchers.length > 0 && <div><span className="font-bold text-gray-800 flex items-center gap-1">👁️ Watching ({watchers.length}):</span></div>}
+        
+        {watchers.length > 0 && (
+          <div>
+            <span className="font-bold text-gray-800 flex items-center gap-1 mb-2">👁️ Watching ({watchers.length}):</span>
+            <div className="flex flex-wrap gap-2">
+              {watchers.map((w, i) => (
+                <div key={`${w.user_email}-${i}`} className="flex items-center gap-1.5 bg-gray-100 border border-gray-200 px-2.5 py-1.5 rounded-full shadow-sm hover:bg-gray-200 transition-colors">
+                  {w.avatar_url ? (
+                    <img src={w.avatar_url} alt={w.username || 'Fan'} className="w-5 h-5 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-5 h-5 bg-gray-400 rounded-full flex items-center justify-center text-white text-[10px] font-bold uppercase">{w.username?.[0] || 'F'}</div>
+                  )}
+                  <span className="text-[11px] font-bold text-gray-700">{w.username}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {showHostModal && (
