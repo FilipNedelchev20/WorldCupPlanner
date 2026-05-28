@@ -81,9 +81,10 @@ export default function Home() {
     };
     loadInitial();
 
+    // FIXED: Changed 'postgres' to 'postgres_changes' to match Supabase v2!
     const channel = supabase.channel('realtime:public')
-      .on('postgres', { event: '*', schema: 'public', table: 'votes' }, () => fetchData())
-      .on('postgres', { event: '*', schema: 'public', table: 'comments' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'votes' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => fetchData())
       .subscribe();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => setUser(session?.user || null));
