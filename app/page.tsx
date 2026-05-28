@@ -252,7 +252,12 @@ export default function Home() {
                     </button>
                   </div>
                   
-                  <VoteButtons matchId={match.id} initialVotes={matchVotes} onVoteChange={fetchData} />
+                 <VoteButtons 
+  matchId={match.id} 
+  votes={matchVotes} 
+  currentUserEmail={user?.email} 
+  onVoteChange={fetchData} 
+/>
 
                   <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
                     <a href={generateCalendarLink(match)} target="_blank" rel="noreferrer" className="flex-1 bg-gray-50 text-gray-600 py-2 rounded-lg text-xs font-bold hover:bg-gray-100 transition-colors flex items-center justify-center gap-2">📅 Add to Cal</a>

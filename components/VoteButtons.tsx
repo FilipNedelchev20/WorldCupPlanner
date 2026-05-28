@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -15,25 +15,22 @@ type Vote = {
   rsvp_limit?: number | null;
 };
 
-export default function VoteButtons({ matchId, initialVotes = [], onVoteChange }: { matchId: number; initialVotes: Vote[]; onVoteChange?: () => void; }) {
-  const [votes, setVotes] = useState<Vote[]>(initialVotes);
+export default function VoteButtons({ 
+  matchId, 
+  votes = [], 
+  currentUserEmail,
+  onVoteChange 
+}: { 
+  matchId: number; 
+  votes: Vote[]; 
+  currentUserEmail?: string;
+  onVoteChange?: () => void; 
+}) {
   const [isProcessing, setIsProcessing] = useState(false); 
-  
-  // FIXED: Safely store the current user's email in state
-  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
-  
   const [showHostModal, setShowHostModal] = useState(false);
   const [hostMessage, setHostMessage] = useState("");
   const [rsvpLimit, setRsvpLimit] = useState<number | "">("");
 
-  useEffect(() => {
-    setVotes(initialVotes || []);
-    // Safely fetch user on load
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setCurrentUserEmail(user.email || null);
-    });
-  }, [initialVotes]);
-  
   const handleWatchVote = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
@@ -48,7 +45,12 @@ export default function VoteButtons({ matchId, initialVotes = [], onVoteChange }
     const existingVote = votes.find(v => v.user_email === user.email && v.intent === 'watch');
 
     if (existingVote) {
-      const { error } = await supabase.from('votes').delete().match({ match_id: matchId, user_email: user.email, intent: 'watch' });
+      const { error } = await supabase.from('votes')
+        .delete()
+        .eq('match_id', matchId)
+        .eq('user_email', user.email)
+        .eq('intent', 'watch');
+        
       if (!error && onVoteChange) onVoteChange();
     } else {
       const newVote = { 
@@ -68,7 +70,12 @@ export default function VoteButtons({ matchId, initialVotes = [], onVoteChange }
 
     const existingVote = votes.find(v => v.user_email === user.email && v.intent === 'host');
     if (existingVote) {
-      await supabase.from('votes').delete().match({ match_id: matchId, user_email: user.email, intent: 'host' });
+      await supabase.from('votes')
+        .delete()
+        .eq('match_id', matchId)
+        .eq('user_email', user.email)
+        .eq('intent', 'host');
+        
       if (onVoteChange) onVoteChange();
     } else {
       setShowHostModal(true);
@@ -101,7 +108,6 @@ export default function VoteButtons({ matchId, initialVotes = [], onVoteChange }
   const totalCapacity = hosts.reduce((acc, h) => acc + (h.rsvp_limit || 0), 0);
   const hasLimits = hosts.some(h => h.rsvp_limit && h.rsvp_limit > 0);
   
-  // FIXED: Synchronous check for button disabling
   const userHasWatchVote = currentUserEmail ? watchers.some(v => v.user_email === currentUserEmail) : false;
   const isFull = hasLimits && watchers.length >= totalCapacity;
   const disableWatchBtn = isProcessing || (isFull && !userHasWatchVote);
